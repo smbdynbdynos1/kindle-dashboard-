@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Desk Dashboard</title>
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --bg:#FFFFFF;
+  --fg:#000000;
+  --fg-soft:#4A4A4A;
+  --line:#000000;
+  --line-weight:3px;
+  --done-fg:#6E6E6E;
+  --input-bg:#FFFFFF;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#000000;
+    --fg:#FFFFFF;
+    --fg-soft:#B7B7B7;
+    --line:#FFFFFF;
+    --done-fg:#8A8A8A;
+    --input-bg:#000000;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#000000;
+  --fg:#FFFFFF;
+  --fg-soft:#B7B7B7;
+  --line:#FFFFFF;
+  --done-fg:#8A8A8A;
+  --input-bg:#000000;
+}
+:root[data-theme="contrast"]{
+  --bg:#FFFFFF;
+  --fg:#000000;
+  --fg-soft:#000000;
+  --line:#000000;
+  --line-weight:5px;
+  --done-fg:#000000;
+  --input-bg:#FFFFFF;
+}
+
+*{ box-sizing:border-box; }
+
+html,body{
+  margin:0;
+  padding:0;
+  background:var(--bg);
+  color:var(--fg);
+}
+
+body{
+  font-family:-apple-system, "Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif;
+  font-size:18px;
+  line-height:1.4;
+  -webkit-text-size-adjust:100%;
+}
+
+.serif{
+  font-family:Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+}
+
+button, input, textarea{
+  font-family:inherit;
+  color:var(--fg);
+  background:var(--input-bg);
+}
+
+button{
+  border:var(--line-weight) solid var(--line);
+  background:var(--bg);
+  color:var(--fg);
+  padding:10px 14px;
+  min-height:44px;
+  min-width:44px;
+  font-size:17px;
+  cursor:pointer;
+}
+button:active{ background:var(--fg); color:var(--bg); }
+
+input[type="text"], textarea{
+  border:var(--line-weight) solid var(--line);
+  padding:10px;
+  font-size:17px;
+  width:100%;
+}
+
+textarea{ resize:vertical; }
+
+.wrap{
+  max-width:900px;
+  margin:0 auto;
+  padding:16px 20px 60px;
+  position:relative;
+}
+
+/* ============ HEADER / CLOCK ============ */
+.top-row{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  min-height:44px;
+}
+
+.gear-btn{
+  border:var(--line-weight) solid var(--line);
+  background:var(--bg);
+  min-height:44px;
+  min-width:44px;
+  font-size:22px;
+  line-height:1;
+  padding:6px 10px;
+}
+
+.hero{
+  text-align:center;
+  padding:10px 0 22px;
+  border-bottom:var(--line-weight) solid var(--line);
+  margin-bottom:22px;
+}
+
+.clock{
+  font-size:min(20vw, 108px);
+  font-weight:700;
+  letter-spacing:1px;
+  line-height:1;
+}
+
+.clock-loc{
+  font-size:16px;
+  color:var(--fg-soft);
+  margin-top:4px;
+  letter-spacing:2px;
+}
+
+.date-day{
+  font-size:26px;
+  margin-top:14px;
+}
+
+.date-full{
+  font-size:20px;
+  color:var(--fg-soft);
+  margin-top:2px;
+}
+
+/* ============ SECTIONS ============ */
+.section{
+  border-top:var(--line-weight) solid var(--line);
+  padding:18px 0;
+}
+.section:first-of-type{ border-top:none; }
+
+.section-title{
+  font-size:20px;
+  font-weight:700;
+  margin:0 0 4px;
+}
+
+.progress-line{
+  color:var(--fg-soft);
+  font-size:17px;
+  margin-bottom:10px;
+}
+
+.progress-bar{
+  height:16px;
+  border:2px solid var(--line);
+  margin-bottom:16px;
+}
+.progress-fill{
+  height:100%;
+  background:var(--fg);
+}
+
+/* ============ CHECKLIST ============ */
+ul.list{ list-style:none; margin:0; padding:0; }
+
+.task-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 0;
+  border-bottom:1px solid var(--fg-soft);
+}
+.task-row:last-child{ border-bottom:none; }
+
+.task-check{
+  min-width:40px;
+  min-height:40px;
+  font-size:20px;
+  flex:0 0 auto;
+}
+
+.task-text{
+  flex:1 1 auto;
+  font-size:19px;
+  word-break:break-word;
+}
+.task-row.done .task-text{
+  text-decoration:line-through;
+  color:var(--done-fg);
+}
+
+.task-actions{
+  display:flex;
+  gap:6px;
+  flex:0 0 auto;
+}
+.task-actions button{
+  min-width:40px;
+  min-height:40px;
+  padding:4px 8px;
+  font-size:16px;
+}
+
+.edit-row{
+  display:flex;
+  gap:8px;
+  padding:8px 0;
+}
+
+.add-row{
+  display:flex;
+  gap:8px;
+  margin-top:12px;
+}
+.add-row input{ flex:1 1 auto; }
+
+/* ============ SCHEDULE ============ */
+.sched-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 0;
+  border-bottom:1px solid var(--fg-soft);
+}
+.sched-row:last-child{ border-bottom:none; }
+
+.sched-time{
+  font-weight:700;
+  min-width:92px;
+  font-size:18px;
+}
+.sched-label{
+  flex:1 1 auto;
+  font-size:18px;
+  word-break:break-word;
+}
+
+.sched-edit-row{
+  display:flex;
+  gap:8px;
+  margin-bottom:10px;
+  flex-wrap:wrap;
+}
+.sched-edit-row input:first-child{ flex:0 0 110px; }
+.sched-edit-row input:last-child{ flex:1 1 160px; }
+
+/* ============ NOTES ============ */
+#notes{
+  min-height:100px;
+}
+.notes-meta{
+  color:var(--fg-soft);
+  font-size:14px;
+  margin-top:6px;
+  min-height:18px;
+}
+
+/* ============ SETTINGS PANEL ============ */
+.overlay{
+  position:fixed;
+  inset:0;
+  background:var(--bg);
+  display:none;
+  overflow:auto;
+  z-index:10;
+}
+.overlay.open{ display:block; }
+
+.settings-inner{
+  max-width:640px;
+  margin:0 auto;
+  padding:20px;
+}
+
+.settings-close{
+  display:block;
+  margin-bottom:16px;
+}
+
+.settings-group{
+  border-top:var(--line-weight) solid var(--line);
+  padding:16px 0;
+}
+.settings-group:first-of-type{ border-top:none; }
+
+.settings-group h3{
+  font-size:18px;
+  margin:0 0 10px;
+}
+
+.opt-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 0;
+  font-size:17px;
+}
+.opt-row input[type="radio"], .opt-row input[type="checkbox"]{
+  width:26px;
+  height:26px;
+  flex:0 0 auto;
+}
+.opt-row label{ flex:1 1 auto; }
+
+.danger-btn{ margin-top:10px; }
+
+.hidden-section{ display:none; }
+
+/* ============ LAYOUT: WIDE (landscape / desktop) ============ */
+@media (min-width:700px){
+  .cols{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:0 40px;
+  }
+  .cols .section{ padding:18px 0; }
+  .cols .section:nth-child(2){ border-top:none; border-left:var(--line-weight) solid var(--line); padding-left:40px; margin-left:-40px; }
+}
+
+/* Focus visibility */
+button:focus, input:focus, textarea:focus{
+  outline:3px solid var(--fg);
+  outline-offset:2px;
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="top-row">
+    <button class="gear-btn" id="settingsBtn" aria-label="Settings" title="Settings">&#9881;</button>
+  </div>
+
+  <div class="hero">
+    <div class="clock serif" id="clockDisplay">--:--</div>
+    <div class="clock-loc">DELHI</div>
+    <div class="date-day serif" id="dateDay">-</div>
+    <div class="date-full" id="dateFull">-</div>
+  </div>
+
+  <div class="cols">
+    <div id="checklistSection" class="section">
+      <div class="section-title">Today's Tasks</div>
+      <div class="progress-line" id="progressLine">0 / 0 completed</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <ul class="list" id="taskList"></ul>
+      <div class="add-row">
+        <input type="text" id="newTaskInput" placeholder="Add a task" maxlength="120">
+        <button id="addTaskBtn">Add</button>
+      </div>
+    </div>
+
+    <div id="scheduleSection" class="section">
+      <div class="section-title">Today's Schedule</div>
+      <ul class="list" id="schedList"></ul>
+      <div class="sched-edit-row">
+        <input type="text" id="newSchedTime" placeholder="4:00 PM" maxlength="20">
+        <input type="text" id="newSchedLabel" placeholder="Mathematics" maxlength="80">
+      </div>
+      <button id="addSchedBtn">Add entry</button>
+    </div>
+  </div>
+
+  <div id="notesSection" class="section">
+    <div class="section-title">Quick Notes</div>
+    <textarea id="notes" placeholder="Type a note. It saves automatically."></textarea>
+    <div class="notes-meta" id="notesMeta"></div>
+  </div>
+
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div class="overlay" id="settingsOverlay">
+  <div class="settings-inner">
+    <button class="settings-close" id="closeSettingsBtn">&#10005; Close</button>
+
+    <div class="settings-group">
+      <h3>Clock format</h3>
+      <div class="opt-row">
+        <input type="radio" name="clockFmt" id="fmt12" value="12">
+        <label for="fmt12">12-hour (2:30 PM)</label>
+      </div>
+      <div class="opt-row">
+        <input type="radio" name="clockFmt" id="fmt24" value="24">
+        <label for="fmt24">24-hour (14:30)</label>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3>Theme</h3>
+      <div class="opt-row">
+        <input type="radio" name="theme" id="themeLight" value="light">
+        <label for="themeLight">Light</label>
+      </div>
+      <div class="opt-row">
+        <input type="radio" name="theme" id="themeDark" value="dark">
+        <label for="themeDark">Dark</label>
+      </div>
+      <div class="opt-row">
+        <input type="radio" name="theme" id="themeContrast" value="contrast">
+        <label for="themeContrast">High contrast</label>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3>Sections shown</h3>
+      <div class="opt-row">
+        <input type="checkbox" id="showChecklist">
+        <label for="showChecklist">Today's tasks</label>
+      </div>
+      <div class="opt-row">
+        <input type="checkbox" id="showSchedule">
+        <label for="showSchedule">Today's schedule</label>
+      </div>
+      <div class="opt-row">
+        <input type="checkbox" id="showNotes">
+        <label for="showNotes">Quick notes</label>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <h3>Checklist</h3>
+      <button class="danger-btn" id="resetChecklistBtn">Reset today's checklist</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "kd_dashboard_v1";
+
+  var defaultState = {
+    tasks: [
+      { id: "t1", text: "Add your first task", done: false }
+    ],
+    schedule: [
+      { id: "s1", time: "4:00 PM", label: "Mathematics" },
+      { id: "s2", time: "5:00 PM", label: "Break" }
+    ],
+    notes: "",
+    settings: {
+      clockFormat: "24",
+      theme: "light",
+      sections: { checklist: true, schedule: true, notes: true }
+    }
+  };
+
+  var state = null;
+
+  function loadState(){
+    try{
+      var raw = window.localStorage.getItem(STORAGE_KEY);
+      if(!raw){ return JSON.parse(JSON.stringify(defaultState)); }
+      var parsed = JSON.parse(raw);
+      if(!parsed.tasks) parsed.tasks = [];
+      if(!parsed.schedule) parsed.schedule = [];
+      if(typeof parsed.notes !== "string") parsed.notes = "";
+      if(!parsed.settings) parsed.settings = defaultState.settings;
+      if(!parsed.settings.sections) parsed.settings.sections = defaultState.settings.sections;
+      if(!parsed.settings.clockFormat) parsed.settings.clockFormat = "24";
+      if(!parsed.settings.theme) parsed.settings.theme = "light";
+      return parsed;
+    }catch(e){
+      console.error("Load failed, using defaults", e);
+      return JSON.parse(JSON.stringify(defaultState));
+    }
+  }
+
+  function saveState(){
+    try{
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }catch(e){
+      console.error("Save failed", e);
+    }
+  }
+
+  function uid(){
+    return "id" + Date.now() + Math.floor(Math.random()*10000);
+  }
+
+  /* ============ CLOCK / DATE ============ */
+  function pad(n){ return n < 10 ? "0" + n : "" + n; }
+
+  function tick(){
+    var now = new Date();
+    var parts = {};
+    try{
+      var dtf = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Kolkata",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+      var arr = dtf.formatToParts(now);
+      for(var i=0;i<arr.length;i++){ parts[arr[i].type] = arr[i].value; }
+    }catch(e){
+      console.error("Intl formatting failed", e);
+    }
+
+    var h24 = parseInt(parts.hour || "0", 10);
+    var min = parts.minute || "00";
+    var timeStr;
+    if(state.settings.clockFormat === "12"){
+      var h12 = h24 % 12;
+      if(h12 === 0) h12 = 12;
+      var ampm = h24 >= 12 ? "PM" : "AM";
+      timeStr = h12 + ":" + min + " " + ampm;
+    } else {
+      timeStr = pad(h24) + ":" + min;
+    }
+
+    var clockEl = document.getElementById("clockDisplay");
+    if(clockEl.textContent !== timeStr){ clockEl.textContent = timeStr; }
+
+    var dayStr = parts.weekday || "";
+    var dateStr = (parts.day || "") + " " + (parts.month || "") + " " + (parts.year || "");
+
+    var dayEl = document.getElementById("dateDay");
+    if(dayEl.textContent !== dayStr){ dayEl.textContent = dayStr; }
+    var dateEl = document.getElementById("dateFull");
+    if(dateEl.textContent !== dateStr){ dateEl.textContent = dateStr; }
+  }
+
+  /* ============ CHECKLIST ============ */
+  function renderTasks(){
+    var list = document.getElementById("taskList");
+    list.innerHTML = "";
+    var doneCount = 0;
+
+    state.tasks.forEach(function(task, idx){
+      if(task.done) doneCount++;
+
+      var li = document.createElement("li");
+      li.className = "task-row" + (task.done ? " done" : "");
+
+      var checkBtn = document.createElement("button");
+      checkBtn.className = "task-check";
+      checkBtn.setAttribute("aria-label", task.done ? "Mark incomplete" : "Mark complete");
+      checkBtn.textContent = task.done ? "\u2713" : "\u25A2";
+      checkBtn.addEventListener("click", function(){
+        task.done = !task.done;
+        saveState();
+        renderTasks();
+      });
+
+      var textSpan = document.createElement("span");
+      textSpan.className = "task-text";
+      textSpan.textContent = task.text;
+
+      var actions = document.createElement("div");
+      actions.className = "task-actions";
+
+      var upBtn = document.createElement("button");
+      upBtn.setAttribute("aria-label", "Move up");
+      upBtn.textContent = "\u2191";
+      upBtn.disabled = (idx === 0);
+      upBtn.addEventListener("click", function(){
+        if(idx > 0){
+          var tmp = state.tasks[idx-1];
+          state.tasks[idx-1] = state.tasks[idx];
+          state.tasks[idx] = tmp;
+          saveState();
+          renderTasks();
+        }
+      });
+
+      var downBtn = document.createElement("button");
+      downBtn.setAttribute("aria-label", "Move down");
+      downBtn.textContent = "\u2193";
+      downBtn.disabled = (idx === state.tasks.length - 1);
+      downBtn.addEventListener("click", function(){
+        if(idx < state.tasks.length - 1){
+          var tmp2 = state.tasks[idx+1];
+          state.tasks[idx+1] = state.tasks[idx];
+          state.tasks[idx] = tmp2;
+          saveState();
+          renderTasks();
+        }
+      });
+
+      var editBtn = document.createElement("button");
+      editBtn.setAttribute("aria-label", "Edit task");
+      editBtn.textContent = "\u270E";
+      editBtn.addEventListener("click", function(){
+        startEditTask(li, task);
+      });
+
+      var delBtn = document.createElement("button");
+      delBtn.setAttribute("aria-label", "Delete task");
+      delBtn.textContent = "\u2715";
+      delBtn.addEventListener("click", function(){
+        var i2 = state.tasks.indexOf(task);
+        if(i2 > -1){ state.tasks.splice(i2, 1); }
+        saveState();
+        renderTasks();
+      });
+
+      actions.appendChild(upBtn);
+      actions.appendChild(downBtn);
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+
+      li.appendChild(checkBtn);
+      li.appendChild(textSpan);
+      li.appendChild(actions);
+      list.appendChild(li);
+    });
+
+    var total = state.tasks.length;
+    document.getElementById("progressLine").textContent = doneCount + " / " + total + " completed";
+    var pct = total > 0 ? Math.round((doneCount/total)*100) : 0;
+    document.getElementById("progressFill").style.width = pct + "%";
+  }
+
+  function startEditTask(li, task){
+    var row = document.createElement("div");
+    row.className = "edit-row";
+
+    var input = document.createElement("input");
+    input.type = "text";
+    input.value = task.text;
+    input.maxLength = 120;
+
+    var saveBtn = document.createElement("button");
+    saveBtn.textContent = "Save";
+    saveBtn.addEventListener("click", function(){
+      var v = input.value.trim();
+      if(v){ task.text = v; }
+      saveState();
+      renderTasks();
+    });
+
+    var cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.addEventListener("click", function(){
+      renderTasks();
+    });
+
+    row.appendChild(input);
+    row.appendChild(saveBtn);
+    row.appendChild(cancelBtn);
+
+    li.innerHTML = "";
+    li.appendChild(row);
+    input.focus();
+  }
+
+  function addTask(){
+    var input = document.getElementById("newTaskInput");
+    var v = input.value.trim();
+    if(!v) return;
+    state.tasks.push({ id: uid(), text: v, done: false });
+    input.value = "";
+    saveState();
+    renderTasks();
+  }
+
+  /* ============ SCHEDULE ============ */
+  function renderSchedule(){
+    var list = document.getElementById("schedList");
+    list.innerHTML = "";
+
+    state.schedule.forEach(function(entry, idx){
+      var li = document.createElement("li");
+      li.className = "sched-row";
+
+      var timeSpan = document.createElement("span");
+      timeSpan.className = "sched-time";
+      timeSpan.textContent = entry.time;
+
+      var labelSpan = document.createElement("span");
+      labelSpan.className = "sched-label";
+      labelSpan.textContent = entry.label;
+
+      var actions = document.createElement("div");
+      actions.className = "task-actions";
+
+      var editBtn = document.createElement("button");
+      editBtn.setAttribute("aria-label", "Edit entry");
+      editBtn.textContent = "\u270E";
+      editBtn.addEventListener("click", function(){
+        startEditSched(li, entry);
+      });
+
+      var delBtn = document.createElement("button");
+      delBtn.setAttribute("aria-label", "Remove entry");
+      delBtn.textContent = "\u2715";
+      delBtn.addEventListener("click", function(){
+        var i2 = state.schedule.indexOf(entry);
+        if(i2 > -1){ state.schedule.splice(i2, 1); }
+        saveState();
+        renderSchedule();
+      });
+
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+
+      li.appendChild(timeSpan);
+      li.appendChild(labelSpan);
+      li.appendChild(actions);
+      list.appendChild(li);
+    });
+  }
+
+  function startEditSched(li, entry){
+    var row = document.createElement("div");
+    row.className = "sched-edit-row";
+
+    var timeInput = document.createElement("input");
+    timeInput.type = "text";
+    timeInput.value = entry.time;
+    timeInput.maxLength = 20;
+
+    var labelInput = document.createElement("input");
+    labelInput.type = "text";
+    labelInput.value = entry.label;
+    labelInput.maxLength = 80;
+
+    var saveBtn = document.createElement("button");
+    saveBtn.textContent = "Save";
+    saveBtn.addEventListener("click", function(){
+      var t = timeInput.value.trim();
+      var l = labelInput.value.trim();
+      if(t){ entry.time = t; }
+      if(l){ entry.label = l; }
+      saveState();
+      renderSchedule();
+    });
+
+    var cancelBtn = document.createElement("button");
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.addEventListener("click", function(){
+      renderSchedule();
+    });
+
+    row.appendChild(timeInput);
+    row.appendChild(labelInput);
+    row.appendChild(saveBtn);
+    row.appendChild(cancelBtn);
+
+    li.innerHTML = "";
+    li.appendChild(row);
+    timeInput.focus();
+  }
+
+  function addSchedEntry(){
+    var timeInput = document.getElementById("newSchedTime");
+    var labelInput = document.getElementById("newSchedLabel");
+    var t = timeInput.value.trim();
+    var l = labelInput.value.trim();
+    if(!t || !l) return;
+    state.schedule.push({ id: uid(), time: t, label: l });
+    timeInput.value = "";
+    labelInput.value = "";
+    saveState();
+    renderSchedule();
+  }
+
+  /* ============ NOTES ============ */
+  var notesSaveTimer = null;
+  function setupNotes(){
+    var ta = document.getElementById("notes");
+    ta.value = state.notes;
+    ta.addEventListener("input", function(){
+      window.clearTimeout(notesSaveTimer);
+      document.getElementById("notesMeta").textContent = "Saving...";
+      notesSaveTimer = window.setTimeout(function(){
+        state.notes = ta.value;
+        saveState();
+        document.getElementById("notesMeta").textContent = "Saved";
+      }, 500);
+    });
+  }
+
+  /* ============ SETTINGS ============ */
+  function applySettingsToUI(){
+    document.documentElement.setAttribute("data-theme", state.settings.theme);
+
+    var fmt = state.settings.clockFormat;
+    document.getElementById("fmt12").checked = (fmt === "12");
+    document.getElementById("fmt24").checked = (fmt === "24");
+
+    var th = state.settings.theme;
+    document.getElementById("themeLight").checked = (th === "light");
+    document.getElementById("themeDark").checked = (th === "dark");
+    document.getElementById("themeContrast").checked = (th === "contrast");
+
+    var sec = state.settings.sections;
+    document.getElementById("showChecklist").checked = !!sec.checklist;
+    document.getElementById("showSchedule").checked = !!sec.schedule;
+    document.getElementById("showNotes").checked = !!sec.notes;
+
+    document.getElementById("checklistSection").classList.toggle("hidden-section", !sec.checklist);
+    document.getElementById("scheduleSection").classList.toggle("hidden-section", !sec.schedule);
+    document.getElementById("notesSection").classList.toggle("hidden-section", !sec.notes);
+  }
+
+  function setupSettingsHandlers(){
+    document.getElementById("settingsBtn").addEventListener("click", function(){
+      document.getElementById("settingsOverlay").classList.add("open");
+    });
+    document.getElementById("closeSettingsBtn").addEventListener("click", function(){
+      document.getElementById("settingsOverlay").classList.remove("open");
+    });
+
+    document.getElementById("fmt12").addEventListener("change", function(){
+      state.settings.clockFormat = "12"; saveState(); tick();
+    });
+    document.getElementById("fmt24").addEventListener("change", function(){
+      state.settings.clockFormat = "24"; saveState(); tick();
+    });
+
+    ["themeLight","themeDark","themeContrast"].forEach(function(id){
+      document.getElementById(id).addEventListener("change", function(e){
+        state.settings.theme = e.target.value;
+        saveState();
+        applySettingsToUI();
+      });
+    });
+
+    document.getElementById("showChecklist").addEventListener("change", function(e){
+      state.settings.sections.checklist = e.target.checked; saveState(); applySettingsToUI();
+    });
+    document.getElementById("showSchedule").addEventListener("change", function(e){
+      state.settings.sections.schedule = e.target.checked; saveState(); applySettingsToUI();
+    });
+    document.getElementById("showNotes").addEventListener("change", function(e){
+      state.settings.sections.notes = e.target.checked; saveState(); applySettingsToUI();
+    });
+
+    document.getElementById("resetChecklistBtn").addEventListener("click", function(){
+      state.tasks.forEach(function(t){ t.done = false; });
+      saveState();
+      renderTasks();
+    });
+  }
+
+  /* ============ INIT ============ */
+  function init(){
+    state = loadState();
+
+    document.getElementById("addTaskBtn").addEventListener("click", addTask);
+    document.getElementById("newTaskInput").addEventListener("keydown", function(e){
+      if(e.key === "Enter"){ addTask(); }
+    });
+
+    document.getElementById("addSchedBtn").addEventListener("click", addSchedEntry);
+
+    setupSettingsHandlers();
+    setupNotes();
+
+    applySettingsToUI();
+    renderTasks();
+    renderSchedule();
+    tick();
+
+    window.setInterval(tick, 1000);
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
